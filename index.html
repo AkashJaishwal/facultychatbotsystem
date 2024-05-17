@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Faculty Search Chatbot</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.7/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="light-mode">
+    <div class="text-center mb-8">
+      <h1 class="text-6xl font-extrabold text-blue-700 p-10 m-2">
+        Faculty Search Chatbot
+      </h1>
+      <p class="text-gray-500">Find information about faculty members</p>
+    </div>
+    <div class="container mx-auto p-6 search-container">
+      <div
+        class="light:bg-white dark:bg-gray-800 rounded p-6 text-center text-lg"
+      >
+        <form id="searchForm">
+          <label for="facultyName">Faculty Name:</label>
+          <input
+            type="text"
+            id="facultyName"
+            name="facultyName"
+            class="w-full sm:w-2/3 md:w-1/2 rounded border p-2 mb-2 mx-auto"
+            placeholder="Hello there....Please enter faculty name..."
+          />
+          <button
+            type="submit"
+            id="searchButton"
+            class="w-full sm:w-auto bg-blue-500 text-white rounded p-2 hover:bg-blue-600 cursor-pointer mb-2 sm:mb-0"
+          >
+            Search
+          </button>
+        </form>
+        <div id="results" class="mt-4"></div>
+        <div id="loading" class="hidden mt-4">Loading...</div>
+        <button
+          id="themeToggle"
+          class="bg-blue-500 text-white rounded p-2 hover:bg-blue-600 cursor-pointer"
+        >
+          Toggle Theme
+        </button>
+      </div>
+    </div>
+    <footer class="text-center text-gray-600 mt-8">
+      <p>&copy; 2024 Faculty Search Chatbot</p>
+    </footer>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const searchForm = document.getElementById("searchForm");
+        const resultsContainer = document.getElementById("results");
+        const loadingIndicator = document.getElementById("loading");
+
+        searchForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const facultyName = document
+            .getElementById("facultyName")
+            .value.trim();
+
+          if (facultyName) {
+            loadingIndicator.classList.remove("hidden");
+            resultsContainer.innerHTML = "";
+
+            new Promise((resolve, reject) => {
+              fetch("http://127.0.0.1:5000/chat_csv", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ query: facultyName }),
+              })
+                .then((response) => {
+                  if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                  }
+                  return response.json();
+                })
+                .then((data) => {
+                  resolve(data);
+                })
+                .catch((error) => {
+                  reject(error);
+                });
+            })
+              .then((data) => {
+                loadingIndicator.classList.add("hidden");
+                if (data.answer) {
+                  resultsContainer.innerHTML = `<p>${data.answer}</p>`;
+                } else {
+                  resultsContainer.innerHTML = "<p>No results found.</p>";
+                }
+              })
+              .catch((error) => {
+                console.error("Error searching faculty: ", error);
+                loadingIndicator.classList.add("hidden");
+                resultsContainer.innerHTML =
+                  "<p>Error occurred while searching faculty.</p>";
+              });
+          }
+        });
+
+        const themeToggle = document.getElementById("themeToggle");
+        const body = document.body;
+
+        themeToggle.addEventListener("click", function () {
+          body.classList.toggle("light-mode");
+          body.classList.toggle("dark-mode");
+        });
+      });
+    </script>
+  </body>
+</html>
